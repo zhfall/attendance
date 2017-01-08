@@ -17,6 +17,7 @@ var outputFile = flag.String("output", fmt.Sprintf("./output/output-%s-%s", *sta
 var errorFile = flag.String("error", fmt.Sprintf("./output/error-%s-%s", *startDate, *endDate), "error file")
 
 var attendances AttendanceSummary
+var loc *time.Location
 
 func main() {
 	flag.Parse()
@@ -25,7 +26,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	loc, _ := time.LoadLocation("Asia/Shanghai")
+	loc, _ = time.LoadLocation("Asia/Shanghai")
+
 	start, err := time.ParseInLocation("2006-01-02", *startDate, loc)
 	if err != nil {
 		fmt.Println("state date is invalid!")
@@ -60,8 +62,8 @@ func main() {
 	attendances = AttendanceSummary{
 		StartDate:              start,
 		EndDate:                end,
-		AttendanceRecordMap:    make(map[string][]AttendanceRecord),
-		UnPlannedAttendanceMap: make(map[string][]UnPlannedAttendanceRecord),
+		AttendanceRecordMap:    make(map[AttendanceKey][]*AttendanceRecord),
+		UnPlannedAttendanceMap: make(map[AttendanceKey]*UnPlannedAttendanceRecord),
 	}
 
 	for i, sheet := range planFile.Sheets {
@@ -74,9 +76,8 @@ func main() {
 				firstRow = row
 			}
 			if j > 2 {
-				var attendanceRecord AttendanceRecord
 				for k := 4; k < len(row.Cells); k = k + 2 {
-					attendanceRecord = AttendanceRecord{}
+					attendanceRecord := NewAttendanceRecord()
 					attendanceName, _ := row.Cells[2].String()
 					if attendanceName != "" {
 						attendanceRecord.AttendanceName = attendanceName
@@ -86,6 +87,11 @@ func main() {
 						}
 						tmpDate = time.Date(tmpDate.Year(), tmpDate.Month(), tmpDate.Day(), 0, 0, 0, 0, loc)
 						attendanceRecord.AttendanceDate = tmpDate
+						attendanceKey := AttendanceKey{
+							AttendanceName: attendanceName,
+							AttendanceDate: tmpDate,
+						}
+
 						timeOn, err := row.Cells[k].GetTime(false)
 						if err != nil {
 							continue
@@ -101,7 +107,8 @@ func main() {
 						if timeOff.Sub(timeOn) > 8*time.Hour {
 							attendanceRecord.NeedMiddleRecord = true
 						}
-						attendances.AttendanceRecordMap[attendanceName] = append(attendances.AttendanceRecordMap[attendanceName], attendanceRecord)
+
+						attendances.AttendanceRecordMap[attendanceKey] = append(attendances.AttendanceRecordMap[attendanceKey], &attendanceRecord)
 					} else {
 						continue
 					}
@@ -115,11 +122,46 @@ func main() {
 		if i > 0 {
 			break
 		}
-		for _, row := range sheet.Rows {
-			for _, cell := range row.Cells {
-				text, _ := cell.String()
-				fmt.Printf("%s\n", text)
+		for j, row := range sheet.Rows {
+			if j > 0 {
+				attendanceName, _ := row.Cells[2].String()
+				if attendanceName == "" {
+					continue
+				}
+				textDate, err := row.Cells[7].String()
+				if err != nil {
+					fmt.Printf("Error in actual date, row number: %d, err: %v\n", j, err)
+					fmt.Println("Row: ", row.Cells)
+				}
+				tmpDate, err := time.ParseInLocation("2006-01-02 15:04:05", textDate, loc)
+				if err != nil {
+					fmt.Printf("Error in actual date, row number: %d, err: %v\n", j, err)
+					fmt.Println("Row: ", row.Cells)
+				}
+				attendances.AddAttendanceRecord(attendanceName, tmpDate)
 			}
+		}
+	}
+
+	count := 0
+	for key := range attendances.AttendanceRecordMap {
+		count++
+		fmt.Println(key)
+		attendanceRecord, ok := attendances.AttendanceRecordMap[key]
+		if ok {
+			for _, attendance := range attendanceRecord {
+				fmt.Println(attendance)
+			}
+		}
+	}
+	println(count)
+
+	lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
+	if lenUnPlanned > 0 {
+		fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
+		for k, v := range attendances.UnPlannedAttendanceMap {
+			fmt.Println(k, v)
+			// _ = fmt.Sprintln(k)
 		}
 	}
 }
