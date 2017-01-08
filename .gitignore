@@ -3,3 +3,4 @@ main
 debug
 testdata/
 output/
+*.xlsx
