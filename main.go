@@ -207,14 +207,23 @@ func main() {
 							attendanceRecord, err := attendances.Lookup(attendanceKey, attendanceName != lastName)
 							if err != nil {
 								outCell = outRow.AddCell()
-								outCell.Value = ""
+								outCell.Value = "未打卡"
 								outCell = outRow.AddCell()
-								outCell.Value = ""
+								outCell.Value = "未打卡"
 							} else {
 								outCell = outRow.AddCell()
-								outCell.Value = attendanceRecord.ActualStart.Format("15:04")
+								if attendanceRecord.ActualStart.Year() < 1910 {
+									outCell.Value = "未打卡"
+								} else {
+									outCell.Value = attendanceRecord.ActualStart.Format("15:04")
+								}
 								outCell = outRow.AddCell()
-								outCell.Value = attendanceRecord.ActualEnd.Format("15:04")
+								if attendanceRecord.ActualEnd.Year() < 1910 {
+									outCell.Value = "未打卡"
+								} else {
+									outCell.Value = attendanceRecord.ActualEnd.Format("15:04")
+								}
+
 							}
 						}
 					}
