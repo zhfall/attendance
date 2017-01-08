@@ -13,14 +13,15 @@ var startDate = flag.String("start", "", "start date")
 var endDate = flag.String("end", "", "end date")
 var planFile = flag.String("plan", "", "plan file")
 var actualFile = flag.String("actual", "", "acutal file")
-var outputFile = flag.String("output", fmt.Sprintf("./output/output-%s-%s", *startDate, *endDate), "output file")
-var errorFile = flag.String("error", fmt.Sprintf("./output/error-%s-%s", *startDate, *endDate), "error file")
+var outputFile = flag.String("output", "", "output file")
+var errorFile = flag.String("error", "", "error file")
 
 var attendances AttendanceSummary
 var loc *time.Location
 
 func main() {
 	flag.Parse()
+
 	if *startDate == "" || *endDate == "" || *planFile == "" || *actualFile == "" {
 		fmt.Printf("Usage: %s -start $StartDate -end $EndDate -plan $planFile -actual $actualFile [-output $outputFilePath] [-error $errorFilePath]\n", os.Args[0])
 		os.Exit(1)
@@ -45,6 +46,14 @@ func main() {
 	if end.Sub(start) >= 31*24*time.Hour {
 		fmt.Println("We don't support duration more than 1 month!")
 		os.Exit(1)
+	}
+
+	if *outputFile == "" {
+		*outputFile = fmt.Sprintf("./output/output-%s-%s.xlsx", start.Format("20060102"), end.Format("20060102"))
+	}
+
+	if *errorFile == "" {
+		*errorFile = fmt.Sprintf("./output/error-%s-%s.xlsx", start.Format("20060102"), end.Format("20060102"))
 	}
 
 	planFile, err := xlsx.OpenFile(*planFile)
@@ -76,7 +85,7 @@ func main() {
 				firstRow = row
 			}
 			if j > 2 {
-				for k := 4; k < len(row.Cells); k = k + 2 {
+				for k := 4; k < len(firstRow.Cells); k = k + 2 {
 					attendanceRecord := NewAttendanceRecord()
 					attendanceName, _ := row.Cells[2].String()
 					if attendanceName != "" {
@@ -155,6 +164,26 @@ func main() {
 		}
 	}
 	println(count)
+
+	outputExcel := xlsx.NewFile()
+	sheet, err := outputExcel.AddSheet("Sheet1")
+	if err != nil {
+		fmt.Printf("Cannot create out excel : %v\n", err)
+		os.Exit(1)
+	}
+
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	cell.Value = "Name"
+	for tmpDate := start; end.Sub(tmpDate) > 0; tmpDate = tmpDate.Add(24 * time.Hour) {
+		cell = row.AddCell()
+		cell.Value = tmpDate.Format("2006-01-02")
+	}
+
+	err = outputExcel.Save(*outputFile)
+	if err != nil {
+		fmt.Printf("Error - Cannot craete output Excel: %v", err)
+	}
 
 	lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
 	if lenUnPlanned > 0 {
