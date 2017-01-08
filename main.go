@@ -49,11 +49,11 @@ func main() {
 	}
 
 	if *outputFile == "" {
-		*outputFile = fmt.Sprintf("./output/output-%s-%s.xlsx", start.Format("20060102"), end.Format("20060102"))
+		*outputFile = fmt.Sprintf("./output-%s.xlsx", start.Format("2006-01"))
 	}
 
 	if *errorFile == "" {
-		*errorFile = fmt.Sprintf("./output/error-%s-%s.xlsx", start.Format("20060102"), end.Format("20060102"))
+		*errorFile = fmt.Sprintf("./error-%s.xlsx", start.Format("2006-01"))
 	}
 
 	planFile, err := xlsx.OpenFile(*planFile)
@@ -152,32 +152,78 @@ func main() {
 		}
 	}
 
-	count := 0
-	for key := range attendances.AttendanceRecordMap {
-		count++
-		// fmt.Println(key)
-		attendanceRecord, ok := attendances.AttendanceRecordMap[key]
-		if ok {
-			for _, attendance := range attendanceRecord {
-				fmt.Println(key, attendance)
-			}
-		}
-	}
-	println(count)
-
 	outputExcel := xlsx.NewFile()
-	sheet, err := outputExcel.AddSheet("Sheet1")
+	outSheet, err := outputExcel.AddSheet("Sheet1")
 	if err != nil {
 		fmt.Printf("Cannot create out excel : %v\n", err)
 		os.Exit(1)
 	}
 
-	row := sheet.AddRow()
+	row := outSheet.AddRow()
 	cell := row.AddCell()
 	cell.Value = "Name"
 	for tmpDate := start; end.Sub(tmpDate) > 0; tmpDate = tmpDate.Add(24 * time.Hour) {
 		cell = row.AddCell()
 		cell.Value = tmpDate.Format("2006-01-02")
+		cell = row.AddCell()
+		cell.Value = tmpDate.Format("2006-01-02")
+	}
+
+	for i, sheet := range planFile.Sheets {
+		if i > 0 {
+			break
+		}
+		var firstRow *xlsx.Row
+		lastName := ""
+		for j, row := range sheet.Rows {
+			if j == 0 {
+				firstRow = row
+			}
+			if j > 2 {
+				attendanceName, _ := row.Cells[2].String()
+				if attendanceName != "" {
+					outRow := outSheet.AddRow()
+					outCell := outRow.AddCell()
+					outCell.Value = attendanceName
+					for k := 4; k < len(firstRow.Cells); k = k + 2 {
+						tmpDate, err := firstRow.Cells[k].GetTime(false)
+						if err != nil {
+							fmt.Printf("Colume %d of first row is not a date!\n", k)
+						}
+						tmpDate = time.Date(tmpDate.Year(), tmpDate.Month(), tmpDate.Day(), 0, 0, 0, 0, loc)
+						attendanceKey := AttendanceKey{
+							AttendanceName: attendanceName,
+							AttendanceDate: tmpDate,
+						}
+
+						_, err1 := row.Cells[k].GetTime(false)
+						_, err2 := row.Cells[k+1].GetTime(false)
+
+						if err1 != nil || err2 != nil {
+							outCell = outRow.AddCell()
+							outCell = outRow.AddCell()
+							continue
+						} else {
+							attendanceRecord, err := attendances.Lookup(attendanceKey, attendanceName != lastName)
+							if err != nil {
+								outCell = outRow.AddCell()
+								outCell.Value = ""
+								outCell = outRow.AddCell()
+								outCell.Value = ""
+							} else {
+								outCell = outRow.AddCell()
+								outCell.Value = attendanceRecord.ActualStart.Format("15:04")
+								outCell = outRow.AddCell()
+								outCell.Value = attendanceRecord.ActualEnd.Format("15:04")
+							}
+						}
+					}
+					lastName = attendanceName
+				} else {
+					continue
+				}
+			}
+		}
 	}
 
 	err = outputExcel.Save(*outputFile)
@@ -185,12 +231,25 @@ func main() {
 		fmt.Printf("Error - Cannot craete output Excel: %v", err)
 	}
 
-	lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
-	if lenUnPlanned > 0 {
-		fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
-		for k, v := range attendances.UnPlannedAttendanceMap {
-			fmt.Println(k, v)
-			// _ = fmt.Sprintln(k)
-		}
-	}
+	// count := 0
+	// for key := range attendances.AttendanceRecordMap {
+	// 	count++
+	// 	// fmt.Println(key)
+	// 	attendanceRecord, ok := attendances.AttendanceRecordMap[key]
+	// 	if ok {
+	// 		for _, attendance := range attendanceRecord {
+	// 			fmt.Println(key, attendance)
+	// 		}
+	// 	}
+	// }
+	// println(count)
+
+	// lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
+	// if lenUnPlanned > 0 {
+	// 	fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
+	// 	for k, v := range attendances.UnPlannedAttendanceMap {
+	// 		fmt.Println(k, v)
+	// 		// _ = fmt.Sprintln(k)
+	// 	}
+	// }
 }

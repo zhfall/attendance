@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"time"
 )
 
@@ -41,6 +42,20 @@ type AttendanceSummary struct {
 	EndDate                time.Time
 	AttendanceRecordMap    map[AttendanceKey][]*AttendanceRecord
 	UnPlannedAttendanceMap map[AttendanceKey]*UnPlannedAttendanceRecord
+}
+
+// Loukup look up an attenance record
+func (attendances *AttendanceSummary) Lookup(key AttendanceKey, first bool) (*AttendanceRecord, error) {
+	attendanceRecordList, ok := attendances.AttendanceRecordMap[key]
+	if ok {
+		if first {
+			return attendanceRecordList[0], nil
+		} else {
+			return attendanceRecordList[1], nil
+		}
+	} else {
+		return &AttendanceRecord{}, errors.New("Not Found")
+	}
 }
 
 // AddAttendanceRecord add Attendance Record
