@@ -6,8 +6,8 @@ import (
 
 // AttendanceRecord a record of attendence
 type AttendanceRecord struct {
-	AttendenceName   string
-	AttendenceDate   time.Time
+	AttendanceName   string
+	AttendanceDate   time.Time
 	PlannedStart     time.Time
 	PlannedEnd       time.Time
 	ActualStart      time.Time
@@ -19,16 +19,15 @@ type AttendanceRecord struct {
 
 // UnPlannedAttendanceRecord is the unplanned attendence record of a person in a day
 type UnPlannedAttendanceRecord struct {
-	AttendenceName string
-	AttendenceDate time.Time
+	AttendanceName string
+	AttendanceDate time.Time
 	OriginalRecord []time.Time
 }
 
-// AttendenceSummary is the attendence record for a person
-type AttendenceSummary struct {
-	AttendenceName          string
-	StartDate               time.Time
-	EndDate                 time.Time
-	AttendanceRecordList    []AttendanceRecord
-	UnPlannedAttendanceList []UnPlannedAttendanceRecord
+// AttendanceSummary is the attendence record for a person
+type AttendanceSummary struct {
+	StartDate              time.Time
+	EndDate                time.Time
+	AttendanceRecordMap    map[string][]AttendanceRecord
+	UnPlannedAttendanceMap map[string][]UnPlannedAttendanceRecord
 }
