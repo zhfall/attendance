@@ -146,11 +146,11 @@ func main() {
 	count := 0
 	for key := range attendances.AttendanceRecordMap {
 		count++
-		fmt.Println(key)
+		// fmt.Println(key)
 		attendanceRecord, ok := attendances.AttendanceRecordMap[key]
 		if ok {
 			for _, attendance := range attendanceRecord {
-				fmt.Println(attendance)
+				fmt.Println(key, attendance)
 			}
 		}
 	}

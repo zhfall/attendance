@@ -45,7 +45,7 @@ type AttendanceSummary struct {
 
 // AddAttendanceRecord add Attendance Record
 func (attendances *AttendanceSummary) AddAttendanceRecord(attendanceName string, checkTime time.Time) {
-	checkDate := time.Date(checkTime.Year(), checkTime.Month(), checkTime.Day(), 0, 0, 0, 0, loc)
+	checkDate := time.Date(checkTime.Year(), checkTime.Month(), checkTime.Day(), 0, 0, 0, 0, checkTime.Location())
 	// fmt.Println(checkTime, checkDate)
 	attendanceKey := AttendanceKey{
 		AttendanceName: attendanceName,
