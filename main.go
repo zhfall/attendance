@@ -48,6 +48,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	days := int(end.Add(1*time.Second).Sub(start).Hours() / 24)
+
 	if *outputFile == "" {
 		*outputFile = fmt.Sprintf("./output-%s.xlsx", start.Format("2006-01"))
 	}
@@ -85,7 +87,7 @@ func main() {
 				firstRow = row
 			}
 			if j > 2 {
-				for k := 4; k < len(firstRow.Cells); k = k + 2 {
+				for k := 4; k < 4+days*2; k = k + 2 {
 					attendanceRecord := NewAttendanceRecord()
 					attendanceName, _ := row.Cells[2].String()
 					if attendanceName != "" {
@@ -133,11 +135,11 @@ func main() {
 		}
 		for j, row := range sheet.Rows {
 			if j > 0 {
-				attendanceName, _ := row.Cells[2].String()
+				attendanceName, _ := row.Cells[10].String()
 				if attendanceName == "" {
 					continue
 				}
-				textDate, err := row.Cells[7].String()
+				textDate, err := row.Cells[5].String()
 				if err != nil {
 					fmt.Printf("Error in actual date, row number: %d, err: %v\n", j, err)
 					fmt.Println("Row: ", row.Cells)
@@ -210,7 +212,7 @@ func main() {
 					outRow := outSheet.AddRow()
 					outCell := outRow.AddCell()
 					outCell.Value = attendanceName
-					for k := 4; k < len(firstRow.Cells); k = k + 2 {
+					for k := 4; k < 4+days*2; k = k + 2 {
 						tmpDate, err := firstRow.Cells[k].GetTime(false)
 						if err != nil {
 							fmt.Printf("Colume %d of first row is not a date!\n", k)
@@ -336,7 +338,7 @@ func main() {
 	// }
 	// println(count)
 
-	// lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
+	// lenUnPlanned = len(attendances.UnPlannedAttendanceMap)
 	// if lenUnPlanned > 0 {
 	// 	fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
 	// 	for k, v := range attendances.UnPlannedAttendanceMap {

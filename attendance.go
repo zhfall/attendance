@@ -48,11 +48,10 @@ type AttendanceSummary struct {
 func (attendances *AttendanceSummary) Lookup(key AttendanceKey, first bool) (*AttendanceRecord, error) {
 	attendanceRecordList, ok := attendances.AttendanceRecordMap[key]
 	if ok {
-		if first {
+		if first || len(attendanceRecordList) == 1 {
 			return attendanceRecordList[0], nil
-		} else {
-			return attendanceRecordList[1], nil
 		}
+		return attendanceRecordList[1], nil
 	} else {
 		return &AttendanceRecord{}, errors.New("Not Found")
 	}
