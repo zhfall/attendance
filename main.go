@@ -152,6 +152,25 @@ func main() {
 		}
 	}
 
+	blueFill := *xlsx.NewFill("solid", "00FF00FF", "FF000000")
+	redFill := *xlsx.NewFill("solid", "00FF0000", "0000FF00")
+	// greenFill := *xlsx.NewFill("solid", "00000000", "00FF0000")
+
+	var redStyle = xlsx.Style{
+		Fill:      redFill,
+		ApplyFill: true,
+	}
+
+	var blueStyle = xlsx.Style{
+		Fill:      blueFill,
+		ApplyFill: true,
+	}
+
+	// var greenStyle = xlsx.Style{
+	// 	Fill:      greenFill,
+	// 	ApplyFill: true,
+	// }
+
 	outputExcel := xlsx.NewFile()
 	outSheet, err := outputExcel.AddSheet("Sheet1")
 	if err != nil {
@@ -214,29 +233,35 @@ func main() {
 							if err != nil {
 								outCell = outRow.AddCell()
 								outCell.Value = "未打卡"
+								outCell.SetStyle(&redStyle)
 								missCount++
 								outCell = outRow.AddCell()
 								outCell.Value = "未打卡"
+								outCell.SetStyle(&redStyle)
 								missCount++
 							} else {
 								outCell = outRow.AddCell()
 								if attendanceRecord.ActualStart.Year() < 1910 {
 									outCell.Value = "未打卡"
+									outCell.SetStyle(&redStyle)
 									missCount++
 								} else {
 									outCell.Value = attendanceRecord.ActualStart.Format("15:04")
 									if attendanceRecord.ActualStart.Sub(attendanceRecord.PlannedStart) > 0 {
 										lateCount++
+										outCell.SetStyle(&blueStyle)
 									}
 								}
 								outCell = outRow.AddCell()
 								if attendanceRecord.ActualEnd.Year() < 1910 {
 									outCell.Value = "未打卡"
+									outCell.SetStyle(&redStyle)
 									missCount++
 								} else {
 									outCell.Value = attendanceRecord.ActualEnd.Format("15:04")
 									if attendanceRecord.ActualEnd.Sub(attendanceRecord.PlannedEnd) < 0 {
 										lateCount++
+										outCell.SetStyle(&blueStyle)
 									}
 								}
 							}
@@ -245,13 +270,15 @@ func main() {
 					lastName = attendanceName
 					outCell = outRow.AddCell()
 					if lateCount > 0 {
-						outCell.Value = fmt.Sprintf("%d", lateCount)
+						outCell.SetInt(lateCount)
+						outCell.SetStyle(&blueStyle)
 					} else {
 						outCell.Value = ""
 					}
 					outCell = outRow.AddCell()
 					if missCount > 0 {
-						outCell.Value = fmt.Sprintf("%d", missCount)
+						outCell.SetInt(missCount)
+						outCell.SetStyle(&redStyle)
 					} else {
 						outCell.Value = ""
 					}
