@@ -161,13 +161,17 @@ func main() {
 
 	row := outSheet.AddRow()
 	cell := row.AddCell()
-	cell.Value = "Name"
+	cell.Value = "姓名"
 	for tmpDate := start; end.Sub(tmpDate) > 0; tmpDate = tmpDate.Add(24 * time.Hour) {
 		cell = row.AddCell()
 		cell.Value = tmpDate.Format("2006-01-02")
 		cell = row.AddCell()
 		cell.Value = tmpDate.Format("2006-01-02")
 	}
+	cell = row.AddCell()
+	cell.Value = "迟到早退"
+	cell = row.AddCell()
+	cell.Value = "未打卡"
 
 	for i, sheet := range planFile.Sheets {
 		if i > 0 {
@@ -182,6 +186,8 @@ func main() {
 			if j > 2 {
 				attendanceName, _ := row.Cells[2].String()
 				if attendanceName != "" {
+					lateCount := 0
+					missCount := 0
 					outRow := outSheet.AddRow()
 					outCell := outRow.AddCell()
 					outCell.Value = attendanceName
@@ -208,26 +214,47 @@ func main() {
 							if err != nil {
 								outCell = outRow.AddCell()
 								outCell.Value = "未打卡"
+								missCount++
 								outCell = outRow.AddCell()
 								outCell.Value = "未打卡"
+								missCount++
 							} else {
 								outCell = outRow.AddCell()
 								if attendanceRecord.ActualStart.Year() < 1910 {
 									outCell.Value = "未打卡"
+									missCount++
 								} else {
 									outCell.Value = attendanceRecord.ActualStart.Format("15:04")
+									if attendanceRecord.ActualStart.Sub(attendanceRecord.PlannedStart) > 0 {
+										lateCount++
+									}
 								}
 								outCell = outRow.AddCell()
 								if attendanceRecord.ActualEnd.Year() < 1910 {
 									outCell.Value = "未打卡"
+									missCount++
 								} else {
 									outCell.Value = attendanceRecord.ActualEnd.Format("15:04")
+									if attendanceRecord.ActualEnd.Sub(attendanceRecord.PlannedEnd) < 0 {
+										lateCount++
+									}
 								}
-
 							}
 						}
 					}
 					lastName = attendanceName
+					outCell = outRow.AddCell()
+					if lateCount > 0 {
+						outCell.Value = fmt.Sprintf("%d", lateCount)
+					} else {
+						outCell.Value = ""
+					}
+					outCell = outRow.AddCell()
+					if missCount > 0 {
+						outCell.Value = fmt.Sprintf("%d", missCount)
+					} else {
+						outCell.Value = ""
+					}
 				} else {
 					continue
 				}
