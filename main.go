@@ -240,6 +240,35 @@ func main() {
 		fmt.Printf("Error - Cannot craete output Excel: %v", err)
 	}
 
+	lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
+	if lenUnPlanned > 0 {
+		errorExcel := xlsx.NewFile()
+		errorSheet, err := errorExcel.AddSheet("Sheet1")
+		if err != nil {
+			fmt.Printf("Cannot create out excel : %v\n", err)
+			os.Exit(1)
+		}
+
+		row := errorSheet.AddRow()
+		cell := row.AddCell()
+		cell.Value = "姓名"
+		cell = row.AddCell()
+		cell.Value = "日期"
+
+		for k := range attendances.UnPlannedAttendanceMap {
+			row = errorSheet.AddRow()
+			cell = row.AddCell()
+			cell.Value = k.AttendanceName
+			cell = row.AddCell()
+			cell.Value = k.AttendanceDate.Format("2006-01-02")
+		}
+
+		err = errorExcel.Save(*errorFile)
+		if err != nil {
+			fmt.Printf("Error - Cannot craete output Excel: %v", err)
+		}
+	}
+
 	// count := 0
 	// for key := range attendances.AttendanceRecordMap {
 	// 	count++
