@@ -325,25 +325,5 @@ func main() {
 		}
 	}
 
-	// count := 0
-	// for key := range attendances.AttendanceRecordMap {
-	// 	count++
-	// 	// fmt.Println(key)
-	// 	attendanceRecord, ok := attendances.AttendanceRecordMap[key]
-	// 	if ok {
-	// 		for _, attendance := range attendanceRecord {
-	// 			fmt.Println(key, attendance)
-	// 		}
-	// 	}
-	// }
-	// println(count)
-
-	// lenUnPlanned = len(attendances.UnPlannedAttendanceMap)
-	// if lenUnPlanned > 0 {
-	// 	fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
-	// 	for k, v := range attendances.UnPlannedAttendanceMap {
-	// 		fmt.Println(k, v)
-	// 		// _ = fmt.Sprintln(k)
-	// 	}
-	// }
+	attendances.Println(false)
 }

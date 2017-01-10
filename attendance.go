@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -133,5 +134,33 @@ func (attendances *AttendanceSummary) AddAttendanceRecord(attendanceName string,
 			attendances.UnPlannedAttendanceMap[attendanceKey] = unPlannedAttendanceRecord
 		}
 		unPlannedAttendanceRecord.OriginalRecords = append(unPlannedAttendanceRecord.OriginalRecords, checkTime)
+	}
+}
+
+// Println print the result
+func (attendances *AttendanceSummary) Println(verbose bool) {
+	count := 0
+	for key := range attendances.AttendanceRecordMap {
+		count++
+		// fmt.Println(key)
+		attendanceRecord, ok := attendances.AttendanceRecordMap[key]
+		if ok {
+			for _, attendance := range attendanceRecord {
+				if verbose {
+					fmt.Println(key, attendance)
+				}
+			}
+		}
+	}
+	fmt.Println("Total Attendances Records", count)
+
+	lenUnPlanned := len(attendances.UnPlannedAttendanceMap)
+	if lenUnPlanned > 0 {
+		fmt.Printf("Warning: Some record(%d) are not found in plans!\n", lenUnPlanned)
+		for k, v := range attendances.UnPlannedAttendanceMap {
+			if verbose {
+				fmt.Println(k, v)
+			}
+		}
 	}
 }
